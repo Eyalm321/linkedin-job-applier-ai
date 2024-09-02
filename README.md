@@ -6,7 +6,6 @@ This library was created to help you achieve stable careers faster. It is based 
 
 - **🛠️ Command Line Interface (CLI)**
 - **📜 Improved Logging**
-- **🌐 Support for Various Scenarios**
 - **🔗 Ollama API Integration**
 - **🥶 Refined Prompts for ICE COLD temperature**
 - **✨ Added many more scenarios that Selenium can now pass**

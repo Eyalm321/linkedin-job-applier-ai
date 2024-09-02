@@ -9,14 +9,7 @@ This library was created to help you achieve stable careers faster. It is based 
 - **🌐 Support for Various Scenarios**
 - **🔗 Ollama API Integration**
 - **🥶 Refined Prompts for ICE COLD temperature**
-
-## 🌟 Features
-
-- **🎯 Model Selection:** Override the default model configured in your environment variables with a custom model using the `--model` or `-m` option.
-- **⚙️ Provider Selection:** Choose between different AI providers (OpenAI, Anthropic, Ollama) and configure the necessary API keys or base URLs.
-- **🌡️ Temperature Control:** Adjust the temperature setting of the AI model to control the randomness and creativity of the output.
-- **📝 Version Information:** Display the current version of the CLI tool.
-- **⚠️ Interactive Disclaimer:** Includes a disclaimer that users must acknowledge before proceeding with the tool.
+- **✨ Added many more scenarios that Selenium can now pass**
 
 ## 📦 Installation
 

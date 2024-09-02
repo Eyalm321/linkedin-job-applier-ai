@@ -1,7 +1,3 @@
-Certainly! Here's your text with added emojis to make it more engaging:
-
----
-
 # 🚀 LinkedIn Job Applier AI - CLI Tool
 
 Greetings fellow job seekers,

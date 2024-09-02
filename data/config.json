@@ -1,0 +1,49 @@
+{
+    "remote": true,
+    "experienceLevel": {
+        "internship": false,
+        "entry": true,
+        "associate": true,
+        "mid-senior level": true,
+        "director": false,
+        "executive": false
+    },
+    "jobTypes": {
+        "full-time": true,
+        "contract": true,
+        "part-time": true,
+        "temporary": true,
+        "internship": false,
+        "other": false,
+        "volunteer": false
+    },
+    "date": {
+        "all time": true,
+        "month": true,
+        "week": true,
+        "24 hours": true
+    },
+    "positions": [
+        "Software Developer",
+        "Full Stack Engineer",
+        "Frontend Developer",
+        "Backend Developer"
+    ],
+    "locations": [
+        "United States",
+        "Los Angeles, California",
+        "San Francisco, California",
+        "San Jose, California",
+        "Seattle, Washington",
+        "New York, New York",
+        "Boston, Massachusetts"
+    ],
+    "distance": 100,
+    "companyBlacklist": [],
+    "titleBlacklist": [],
+    "outputFileDirectory": "C:\\Users\\Admin\\linkedin-bot\\linkedin-easy-apply-bot\\output",
+    "uploads": {
+        "resume": "C:\\Users\\Admin\\linkedin-bot\\linkedin-easy-apply-bot\\uploads\\resume.pdf",
+        "cv": "C:\\Users\\Admin\\linkedin-bot\\linkedin-easy-apply-bot\\uploads\\cv.json"
+    }
+}

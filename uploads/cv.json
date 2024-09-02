@@ -1,0 +1,99 @@
+{
+    "personal_information": {
+        "first_name": "John",
+        "last_name": "Doe",
+        "date_of_birth": "12/27/1994",
+        "country": "United States",
+        "city": "Dallas",
+        "address": "Dallas, Texas",
+        "phone_country_code": "+1",
+        "phone": "2146783421",
+        "email_address": "your@email.com",
+        "github": "https://github.com/",
+        "linkedin": "https://www.linkedin.com/"
+    },
+    "education_details": [
+        {
+            "degree": "Bachelor's Degree",
+            "university": "University of Texas at Dallas",
+            "gpa": "3.5",
+            "graduation_year": "2024",
+            "field_of_study": "Computer Science"
+        }
+    ],
+    "experience_details": [
+        {
+            "position": "AI Engineer",
+            "company": "AI Tech Solutions",
+            "employment_period": "2024 - 2024",
+            "location": "Wilmington, NC",
+            "street_address_line_1": "1234 AI Street",
+            "City": "Wilmington",
+            "State": "NC",
+            "Zip": "28401",
+            "industry": "Artificial Intelligence",
+            "key_responsibilities": [
+                "Developed AI agents with multimodal capabilities for various industries.",
+                "Implemented custom tech stack for AI agent technologies.",
+                "Collaborated with cross-functional teams to deliver innovative solutions."
+            ],
+            "skills_acquired": [
+                "AI Development",
+                "Multimodal AI",
+                "Tech Stack Implementation"
+            ]
+        }
+    ],
+    "projects": [],
+    "skills": {
+            "libraries": "Auth0 SDK, Google SDK, Lodash, Puppeteer, SwiftUI, Combine, Three.js, Babylon.js, AWS SDK, Capacitor, Capacitor Community Plugins, RASA, Langchain(s), Langpath(js), Audio Encoding Libraries(ogg, wav.mp3), Flowwise, Milvus, Singleton, MongoDB, Nest.js, Express, Uvicorn, Haystack, Ollama, Iodash, Zod, RIVA, SocketIO, Redis, Mellisearch, Botpress, Mediasoup, WebRTC, fVAD, TailwindCSS, Nvidia DDP, acme.sh, huggingface, pytorch, Rxjs, ADB, Postman, Git, Tasker, XCode, Visual Studio, Docker, Android Studio, Arduino, Adobe (Illustrator, Substance Painter,Premiere), Autodesk (3ds Max, Maya), VMWare, MongoDB Compass, Unity, Unreal Engine, Microsoft 365, RDP, VNC, Skype Server, Gnome, XFCE, XRDP, SSH, Telnet, SCP",
+            "general_skills": "Developement, Cloud & UI Interfaces, People Skills",
+            "programming_languages": "HTML, Typescript, SCSS / SASS / CSS, SQL, Swift, C++, Python",
+            "integrations": "Angular / Ionic - Front, Node.js / Nest.js - Back, SwiftUI - Mobile, React.js / Solid.js - Front, Uvicorn - Back, WXT - Webextensions",
+            "design": "Adobe Illustrator, Substance Painter, Premiere, Autodesk 3ds Max, Maya",
+            "databases": "MongoDB, MySQL, SQLite, Firebase, Redis, Mellisearch, Milvus, Singlestore",
+            "IT": "Active Directory, Powershell, Networking, Scripting / Automations",
+            "environments": "Linux - RHEL, Fedora, Centos, Ubuntu, Kali. Windows 2000 - 11, Windows Server, Windows Rescue Images. MacOS - own Mac , iPad and iPhone for developement. Xbox/PS - Unreal Engine, Unity.",
+            "server": "Credlepoint, Palo Alto, Fortinet, Cisco, APC"
+        },
+    "achievements": [],
+    "certifications": [],
+    "languages": [
+        {
+            "language": "English",
+            "proficiency": "Fluent"
+        }
+    ],
+    "interests": [],
+    "availability": {
+        "notice_period": "N/A"
+    },
+    "salary_expectations": {
+        "salary_range_usd": "N/A"
+    },
+    "self_identification": {
+        "gender": "Male",
+        "pronouns": "He/Him",
+        "veteran": "N/A",
+        "disability": "N/A",
+        "ethnicity": "N/A"
+    },
+    "legal_authorization": {
+        "eu_work_authorization": "No",
+        "us_work_authorization": "Yes",
+        "requires_us_visa": "No",
+        "requires_us_sponsorship": "No",
+        "requires_eu_visa": "No",
+        "legally_allowed_to_work_in_eu": "No",
+        "legally_allowed_to_work_in_us": "Yes",
+        "requires_eu_sponsorship": "No"
+    },
+    "work_preferences": {
+        "remote_work": "Yes",
+        "in_person_work": "Yes",
+        "open_to_relocation": "Yes",
+        "willing_to_complete_assessments": "Yes",
+        "willing_to_undergo_drug_tests": "Yes",
+        "willing_to_undergo_background_checks": "Yes"
+    }
+}

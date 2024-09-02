@@ -8,9 +8,7 @@ This library was created to help you achieve stable careers faster. It is based 
 - **Improved Logging**
 - **Support for Various Scenarios**
 - **Ollama API Integration**
-- **And Much More**
-
-With these improvements, this tool is more powerful and easier to use, making your job application process smoother and more efficient.
+- **Refined Prompts for ICE COLD temperature**
 
 ## Features
 
@@ -28,22 +26,25 @@ To install the CLI tool, follow these steps:
    ```bash
    git clone https://github.com/Eyalm321/linkedin-job-applier-ai.git
 
-   Navigate to the project directory:
+2. Navigate to the project directory:
+   ```bash
+   cd linkedin-job-applier-ai
 
-bash
-Copy code
-cd linkedin-job-applier-ai
-Install the necessary dependencies:
+3. Install the necessary dependencies:
+   ```bash
+   npm install
 
-bash
-Copy code
-npm install
 Usage
 To run the CLI tool, use the following command:
 
-bash
-Copy code
-node cli.js [options]
+   ```bash
+   npm run start
+
+```
+Using default settings it will automatically recognize the model based on apiKey/baseUrl.
+Otherwise, you can also use the CLI to override with options:
+
+```bash
 Options
 --model, -m <model>: Override the default AI model with a custom model.
 --provider, -p <provider>: Specify the AI provider to use (openai, anthropic, ollama).
@@ -52,35 +53,39 @@ Options
 --temperature, -t <value>: Set the temperature for the AI model output.
 --version, -v: Show the current version of the CLI tool.
 --help, -h: Display help information and usage examples.
+```
+
 Examples
 Override the OLLAMA_MODEL with myModel:
-
-bash
-Copy code
+```
 node cli.js --model myModel
+```
 Use OpenAI as the provider with a specified API key:
-
-bash
-Copy code
+```
 node cli.js --provider openai --apiKey your_openai_api_key
+```
+
 Use a custom Ollama base URL:
-
-bash
-Copy code
+```
 node cli.js --provider ollama --baseUrl http://localhost:11434
+```
 Set the temperature to 0.7 for more diverse output:
-
-bash
+```
 Copy code
 node cli.js --temperature 0.7
+
+```
 Environment Variables
 You can configure the CLI tool using the following environment variables:
 
+```
 OLLAMA_MODEL: Default AI model to use.
 OPENAI_API_KEY: API key for OpenAI.
 ANTHROPIC_API_KEY: API key for Anthropic.
 OLLAMA_BASE_URL: Base URL for Ollama API.
 TEMPERATURE: Default temperature setting for the AI model output.
+
+```
 License
 This project is licensed under the MIT License. See the LICENSE file for more details.
 

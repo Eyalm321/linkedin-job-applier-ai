@@ -289,7 +289,11 @@ function findContent(obj: { [key: string]: any; }): string | null {
 }
 
 function toSnakeCase(str: string): string {
-    return str.replace(/([A-Z])/g, letter => `_${letter.toLowerCase()}`);
+    return str
+        .replace(/([a-z])([A-Z])/g, '$1_$2') // Add underscore between lowercase and uppercase letters
+        .replace(/\s+/g, '_')               // Replace spaces with underscores
+        .replace(/[^a-zA-Z0-9_]/g, '')      // Remove special characters
+        .toLowerCase();                     // Convert the entire string to lowercase
 }
 
 export { ensureChromeProfile, isScrollable, scrollSlow, scrollPage, findContent, toSnakeCase, sleep, random, validateResume, extractNumberFromString, sleepRandom, formatExperienceDetails, formatSkills };

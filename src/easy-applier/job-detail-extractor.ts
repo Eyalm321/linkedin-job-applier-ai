@@ -17,11 +17,13 @@ class JobDetailExtractor {
      */
     public async extractJobDescription(): Promise<string> {
         try {
+            await sleepRandom(2000, 3000);
             const seeMoreButton = await this.driver.findElement(
                 By.xpath('//button[@aria-label="Click to see more description" and @aria-expanded="false" and contains(@class, "jobs-description__footer-button")]')
             );
 
             await seeMoreButton.click();
+            await sleepRandom(500, 1000);
             await this.scrollPage();
             const descriptionElement = await this.driver.findElement(By.className('jobs-description-content__text'));
 

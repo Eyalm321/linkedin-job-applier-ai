@@ -225,9 +225,11 @@ class ApplicationFormFiller {
             this.logger.debug(`Processing section with text: ${sectionText}`);
 
             // Check for predefined values and fill the section accordingly
-            const predefinedValue = Object.entries(this.questionManager.getPersonalInformation()).find(([key, value]) =>
-                toSnakeCase(sectionText).includes(key.toLowerCase())
-            );
+            const predefinedValue = Object.entries(this.questionManager.getPersonalInformation())
+                .find(([key, value]) => {
+                    this.logger.debug(`Checking for predefined value: ${key.toLowerCase()} against section text: ${toSnakeCase(sectionText)}`);
+                    return toSnakeCase(sectionText).includes(key.toLowerCase());
+                });
 
 
             if (predefinedValue) {
@@ -251,6 +253,7 @@ class ApplicationFormFiller {
                 this.findAndHandleRadioQuestion,
                 this.findAndHandleDropdownQuestion,
                 this.findAndHandleTextboxQuestion,
+                this.findAndHandleMultipleCheckboxes,
                 this.findAndHandleDateQuestion
             ];
 
@@ -308,6 +311,14 @@ class ApplicationFormFiller {
             });
             if (dateHandled) return true;
 
+            // Handle checkboxes
+            const checkboxHandled = await this.handleSingleCheckbox(section);
+            if (checkboxHandled) return true;
+
+            // Handle multiple checkboxes
+            const multipleCheckboxesHandled = await this.findAndHandleMultipleCheckboxes(section);
+            if (multipleCheckboxesHandled) return true;
+
             return false; // If no predefined value could be applied
         } catch (error) {
             this.logger.error(`Error filling section with predefined value: ${error}`);
@@ -318,31 +329,152 @@ class ApplicationFormFiller {
 
 
     private async handleSingleCheckbox(section: WebElement): Promise<boolean> {
-        try {
-            const checkboxFieldset = await section.findElement(By.css('fieldset[data-test-checkbox-form-component="true"]'));
-            const checkboxLabel = await checkboxFieldset.findElement(By.css('label'));
-            const checkboxInput = await checkboxFieldset.findElement(By.css('input[type="checkbox"]'));
+        const maxRetries = 3;
+        let attempt = 0;
 
-            if (await checkboxInput.isDisplayed() && await checkboxInput.isEnabled()) {
-                await checkboxLabel.click();
-                await sleepRandom(500, 1000);
+        while (attempt < maxRetries) {
+            try {
+                this.logger.debug(`Attempt ${attempt + 1} to handle checkbox.`);
 
-                const isChecked = await checkboxInput.isSelected();
-                if (isChecked) {
-                    this.logger.success("Checkbox successfully checked.");
-                    return true;
-                } else {
-                    this.logger.error("Failed to check the checkbox.");
+                const checkboxFieldset = await section.findElement(By.css('fieldset[data-test-checkbox-form-component="true"]')).catch(() => null);
+                if (!checkboxFieldset) {
+                    this.logger.warn("Checkbox fieldset not found. Falling back.");
                     return false;
                 }
-            } else {
-                this.logger.warn("Checkbox is either not visible or not enabled.");
+
+                const checkboxLabel = await checkboxFieldset.findElement(By.css('label')).catch(() => null);
+                const checkboxInput = await checkboxFieldset.findElement(By.css('input[type="checkbox"]')).catch(() => null);
+
+                if (!checkboxLabel || !checkboxInput) {
+                    this.logger.warn("Checkbox label or input not found. Falling back.");
+                    return false;
+                }
+
+                if (await checkboxInput.isDisplayed() && await checkboxInput.isEnabled()) {
+                    this.logger.debug("Checkbox is visible and enabled. Clicking the label.");
+                    await checkboxLabel.click();
+                    await sleepRandom(500, 1000);
+
+                    const isChecked = await checkboxInput.isSelected();
+                    if (isChecked) {
+                        this.logger.success("Checkbox successfully checked.");
+                        return true;
+                    } else {
+                        this.logger.warn("Checkbox not checked. Retrying...");
+                    }
+                } else {
+                    this.logger.warn("Checkbox is either not visible or not enabled.");
+                    return false;
+                }
+            } catch (error: any) {
+                this.logger.error(`Error handling checkbox: ${error}`);
                 return false;
             }
-        } catch (error) {
-            return false;
+
+            attempt++;
+            await sleepRandom(500, 1000); // Wait before retrying
+        }
+
+        this.logger.error("Failed to check the checkbox after multiple attempts.");
+        return false;
+    }
+
+    private async findMultipleCheckboxes(section: WebElement): Promise<{ fieldset: WebElement, checkboxes: WebElement[], labels: WebElement[]; } | null> {
+        try {
+            this.logger.debug("Attempting to find multiple checkboxes fieldset.");
+
+            const checkboxFieldset = await section.findElement(By.css('fieldset[data-test-checkbox-form-component="true"]')).catch(() => null);
+            if (!checkboxFieldset) {
+                this.logger.warn("Multiple checkbox fieldset not found.");
+                return null;
+            }
+
+            const checkboxes = await checkboxFieldset.findElements(By.css('input[type="checkbox"]'));
+            const labels = await checkboxFieldset.findElements(By.css('label'));
+
+            if (checkboxes.length === 0 || labels.length === 0) {
+                this.logger.warn("Checkboxes or labels not found within the fieldset.");
+                return null;
+            }
+
+            return { fieldset: checkboxFieldset, checkboxes, labels };
+        } catch (error: any) {
+            this.logger.error(`Error finding multiple checkboxes: ${error}`);
+            return null;
         }
     }
+
+    private async handleMultipleCheckboxes(data: { fieldset: WebElement, checkboxes: WebElement[], labels: WebElement[]; }): Promise<boolean> {
+        const { fieldset, checkboxes, labels } = data;
+        const maxRetries = 3;
+        let attempt = 0;
+        let allCheckboxesChecked = true;
+
+        while (attempt < maxRetries) {
+            try {
+                this.logger.debug(`Attempt ${attempt + 1} to handle multiple checkboxes.`);
+
+                // Extract the text from the fieldset to use as the question text
+                const questionText = (await fieldset.getText()).toLowerCase().trim();
+                this.logger.debug(`Multiple checkbox question text: ${questionText}`);
+
+                // Extract label texts to use with the question manager
+                const options = await Promise.all(labels.map(async label => await label.getText()));
+                this.logger.debug(`Multiple checkbox options: ${options}`);
+
+                // Use the question manager to determine which checkboxes should be selected
+                const answer = await this.questionManager.answerQuestionFromOptions(questionText, options);
+                this.logger.debug(`Selected answer from options: ${answer}`);
+
+                for (let i = 0; i < checkboxes.length; i++) {
+                    const checkbox = checkboxes[i];
+                    const label = labels[i];
+                    const labelText = await label.getText();
+
+                    if (answer.includes(labelText) && !await checkbox.isSelected()) {
+                        this.logger.debug(`Selecting checkbox for label: ${labelText}`);
+                        await label.click();
+                        await sleepRandom(500, 1000);
+
+                        const isChecked = await checkbox.isSelected();
+                        if (!isChecked) {
+                            this.logger.warn(`Checkbox ${i + 1} not checked. Retrying...`);
+                            allCheckboxesChecked = false;
+                        } else {
+                            this.logger.success(`Checkbox ${i + 1} checked successfully.`);
+                        }
+                    } else if (await checkbox.isSelected()) {
+                        this.logger.info(`Checkbox ${i + 1} for label "${labelText}" already checked. Skipping.`);
+                    }
+                }
+
+                if (allCheckboxesChecked) {
+                    return true;
+                }
+            } catch (e: any) {
+                if (!(e instanceof NoSuchElementError)) {
+                    this.logger.error(`Error handling multiple checkboxes: ${e}`);
+                }
+                allCheckboxesChecked = false;
+            }
+
+            attempt++;
+            await sleepRandom(500, 1000); // Wait before retrying
+        }
+
+        this.logger.error("Failed to check all checkboxes after multiple attempts.");
+        return allCheckboxesChecked;
+    }
+
+
+    private async findAndHandleMultipleCheckboxes(section: WebElement): Promise<boolean> {
+        const checkboxesData = await this.findMultipleCheckboxes(section);
+        if (!checkboxesData) return false;
+
+        return await this.handleMultipleCheckboxes(checkboxesData);
+    }
+
+
 
     private async handleTermsOfService(section: WebElement): Promise<boolean> {
         const checkbox = await section.findElements(By.css('label'));
@@ -372,32 +504,43 @@ class ApplicationFormFiller {
             const radios = await fieldset.findElements(By.css('div.fb-text-selectable__option'));
             if (radios.length === 0) return false;
 
-            const questionTextElement = await fieldset.findElement(By.css('legend > span.fb-dash-form-element__label-title--is-required'));
+            // Attempt to find the question text
+            const questionTextElement = await fieldset.findElement(By.css(
+                'legend > span.fb-dash-form-element__label-title--is-required, legend > span.fb-dash-form-element__label'));
             const questionText = (await questionTextElement.getText()).toLowerCase();
             this.logger.info(`Processing radio question: ${questionText}`);
 
+            // Gather radio options
             const options = await Promise.all(radios.map(async radio => {
                 return await this.getQuestionText(radio);
             }));
 
+            // Sanitize question and search for an existing answer
             const sanitizedQuestion = this.questionManager.sanitizeText(questionText);
             const existingAnswer = overrideAnswer || this.questionManager.findQuestionAnswer(sanitizedQuestion, 'radio')?.['answer'];
             this.logger.debug(`Existing answer: ${existingAnswer}`);
+
             if (existingAnswer) {
                 await this.selectRadio(radios, existingAnswer);
                 return true;
             }
 
+            this.logger.debug(`Answer not found for question: ${questionText}`);
             const answer = await this.questionManager.answerQuestionTextualWideRange(questionText, options);
+
+            // Save the question-answer pair
             this.questionManager.saveQuestionsToJson({ type: 'radio', question: questionText, answer });
-            await sleepRandom(1000, 2000);
+
+            await sleepRandom(1000, 2000);  // Simulate human-like delay
             await this.selectRadio(radios, answer);
+
             return true;
         } catch (error) {
             this.logger.error(`Error handling radio question: ${error}`);
             return false;
         }
     }
+
 
     private async findAndHandleRadioQuestion(section: WebElement): Promise<boolean> {
         const fieldsets = await this.findRadioQuestions(section);
@@ -497,8 +640,10 @@ class ApplicationFormFiller {
         try {
             const labelElement = await this.getLabelElement(section);
             if (labelElement) {
+                this.logger.debug("Label element found. Extracting text.");
                 return (await labelElement.getText()).toLowerCase().trim();
             } else {
+                this.logger.debug("Label element not found. Falling back to group title or subtitle.");
                 return await this.fallbackToGroupTitleOrSubtitle(section);
             }
         } catch {
@@ -522,28 +667,59 @@ class ApplicationFormFiller {
     }
 
     private async fallbackToGroupTitleOrSubtitle(section: WebElement): Promise<string> {
-        try {
-            const groupTitleElements = await section.findElements(By.css('.jobs-easy-apply-form-section__group-title'));
-            if (groupTitleElements.length > 0) {
-                const text = await groupTitleElements[0].getText();
+        this.logger.debug("Falling back to group title or subtitle.");
+
+        // Helper function to get text from elements
+        const getTextFromElements = async (elements: WebElement[]): Promise<string | null> => {
+            for (const element of elements) {
+                const text = await element.getText();
                 if (text.trim() !== '') return text.toLowerCase();
             }
-        } catch {
-            this.logger.trivial("Error finding group title element");
-        }
+            return null;
+        };
 
         try {
-            const groupSubtitleElements = await section.findElements(By.css('.jobs-easy-apply-form-section__group-subtitle'));
-            if (groupSubtitleElements.length > 0) {
-                const text = await groupSubtitleElements[0].getText();
-                if (text.trim() !== '') return text.toLowerCase();
-            }
-        } catch {
-            this.logger.trivial("Error finding group subtitle element");
+            this.logger.debug("Navigating to parent element of the section.");
+            const parentElement = await section.findElement(By.xpath('..'));
+
+            this.logger.debug("Attempting to find preceding group title element.");
+            const groupTitleElements = await parentElement.findElements(
+                By.xpath('./preceding-sibling::*[contains(@class, "jobs-easy-apply-form-section__group-title")]')
+            );
+            this.logger.debug(`Group title elements found: ${groupTitleElements.length}`);
+            let text = await getTextFromElements(groupTitleElements);
+            if (text) return text;
+
+            this.logger.debug("Attempting to find preceding group subtitle element.");
+            const groupSubtitleElements = await parentElement.findElements(
+                By.xpath('./preceding-sibling::*[contains(@class, "jobs-easy-apply-form-section__group-subtitle")]')
+            );
+            this.logger.debug(`Group subtitle elements found: ${groupSubtitleElements.length}`);
+            text = await getTextFromElements(groupSubtitleElements);
+            if (text) return text;
+
+            this.logger.debug("Attempting to find group title and subtitle elements within the parent element.");
+            const allGroupTitleElements = await parentElement.findElements(By.css('.jobs-easy-apply-form-section__group-title'));
+            const allGroupSubtitleElements = await parentElement.findElements(By.css('.jobs-easy-apply-form-section__group-subtitle'));
+
+            this.logger.debug(`All group title elements found: ${allGroupTitleElements.length}`);
+            text = await getTextFromElements(allGroupTitleElements);
+            if (text) return text;
+
+            this.logger.debug(`All group subtitle elements found: ${allGroupSubtitleElements.length}`);
+            text = await getTextFromElements(allGroupSubtitleElements);
+            if (text) return text;
+
+            this.logger.debug("No group title or subtitle found after extended search.");
+
+        } catch (error: any) {
+            this.logger.error(`Error falling back to group title or subtitle: ${error}`);
         }
 
         throw new Error("Failed to find valid question text");
     }
+
+
 
     private async findDateQuestion(section: WebElement): Promise<{ dateField: WebElement; questionText: string; } | null> {
         try {
@@ -639,8 +815,10 @@ class ApplicationFormFiller {
                 const existingAnswer = this.questionManager.findQuestionAnswer(sanitizedQuestion, 'dropdown')?.['answer'];
                 if (existingAnswer) {
                     answer = existingAnswer;
+                    this.logger.debug(`Existing answer found for question: ${existingAnswer}`);
                 } else {
                     answer = await this.questionManager.answerQuestionFromOptions(questionText, options);
+                    this.logger.debug(`Answer from options: ${answer}`);
                 }
             }
 

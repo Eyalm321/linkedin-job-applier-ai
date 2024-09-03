@@ -182,7 +182,7 @@ export class aiAnswerer {
 
         const resumeSectionStr = this.formatResumeSection(sectionNameKey, resumeSection);
         const resumeSkillsStr = formatSkills(this.cv.skills);
-        // console.debug(`answerQuestionTextualWideRange - Invoking chain for section '${sectionName}' with question: ${question}, resume section: ${resumeSectionStr}, resume skills: ${resumeSkillsStr}`);
+        console.debug(`answerQuestionTextualWideRange - Invoking chain for section '${sectionName}' with question: ${question}, resume section: ${resumeSectionStr}, resume skills: ${resumeSkillsStr}`);
         const output = await chain.invoke({ resume_section: resumeSectionStr, skills: resumeSkillsStr, question }) as AIMessage;
         const outputText = findContent(output);
 
@@ -303,6 +303,7 @@ export class aiAnswerer {
 
             const templates = new Templates();
             const funcTemplate = this.preprocessTemplateString(templates.optionsTemplate);
+            this.logger.debug(`answerQuestionFromOptions - Template: ${funcTemplate}`);
             const prompt = ChatPromptTemplate.fromTemplate(funcTemplate);
             const chain = prompt
                 .pipe(this.ai)

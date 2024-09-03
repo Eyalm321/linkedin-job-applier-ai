@@ -29,11 +29,20 @@ To install the CLI tool, follow these steps:
    npm install
    ```
 
+4. **Fill Environment Variables in .env file**
+
+5.  **Build the project**
+   ```
+   npm run build
+   ```
+
 ## 💻 Usage
 To run the CLI tool, use the following command:
 
 ```bash
 npm run start
+or
+npm run start:dev
 ```
 
 Using default settings, it will automatically recognize the model based on `apiKey/baseUrl`. Otherwise, you can also use the CLI to override with options:

@@ -50,10 +50,10 @@ class CLI {
 
     private showDisclaimer() {
         console.log(`
-ER:
-This tootes job applications on LinkedIn. 
-Please use it rey and ensure it aligns with LinkedIn's terms of service.
-By continuing, you acknohe risks and agree to proceed at your own discretion.
+DISCLAIMER:
+This tool automates job applications on LinkedIn. 
+It uses AI, which may not always provide accurate or appropriate responses.
+By continuing, you acknowledge the risks and agree to proceed at your own discretion.
         `.yellow);
     }
 

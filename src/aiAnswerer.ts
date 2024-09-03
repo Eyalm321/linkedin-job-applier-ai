@@ -20,6 +20,7 @@ export class aiAnswerer {
     private ai?: ChatOllama | ChatOpenAI | ChatAnthropic;
     private cv?: Resume;
     private logger: LoggingService;
+    private job?: Job;
 
     constructor(provider: {
         openai?: {
@@ -65,6 +66,20 @@ export class aiAnswerer {
         this.logger.debug(`Base URL: ${provider.ollama?.baseUrl}, Model: ${provider.ollama?.model}, Temperature: ${provider.ollama?.temperature}`);
     }
 
+    /**
+    * Sets the current job for which questions are being answered.
+    */
+    setCurrentJob(job: Job): void {
+        this.job = job;
+    }
+
+    /**
+     * Gets the current job for which questions are being answered.
+     */
+    getCurrentJob(): Job | undefined {
+        return this.job;
+    }
+
     setCV(cv: Resume): void {
         this.cv = cv;
     }
@@ -100,9 +115,7 @@ export class aiAnswerer {
         }
 
         const templates = new Templates();
-        const resumeSectionKey = toSnakeCase(template) as keyof Resume;
-        // console.debug(`createChain - Creating chain for template: ${template}, resume section key: ${resumeSectionKey}`);
-        const templateStr = this.formatResumeSection(resumeSectionKey, templates[template]);
+        const templateStr = this.preprocessTemplateString(templates[template]);
 
         return ChatPromptTemplate.fromTemplate(templateStr).pipe(this.ai);
     }
@@ -149,24 +162,31 @@ export class aiAnswerer {
     }
 
     private async handleCoverLetterChain(question: string, descriptionStr: string): Promise<string> {
-        if (!this.cv) throw new Error("CV not set.");
-        // console.debug(`answerQuestionTextualWideRange - Invoking cover letter chain with question: ${question}`);
-        const chains = this.initializeChains();
-        const coverLetterChain = chains["cover_letter"];
-        const coverLetterOutput = await coverLetterChain.invoke({
-            resume_section: formatResume(this.cv),
-            job_description: descriptionStr
-        });
-        const outputStr = findContent(coverLetterOutput);
-        this.logger.debug(`answerQuestionTextualWideRange - Cover letter output: ${outputStr}`);
-        return outputStr || "";
+        try {
+            if (!this.cv) throw new Error("CV not set.");
+            // console.debug(`answerQuestionTextualWideRange - Invoking cover letter chain with question: ${question}`);
+            const chains = this.initializeChains();
+            const coverLetterChain = chains["cover_letter"];
+            const coverLetterOutput = await coverLetterChain.invoke({
+                resume: formatResume(this.cv),
+                job_description: descriptionStr
+            });
+            const outputStr = findContent(coverLetterOutput);
+            this.logger.debug(`answerQuestionTextualWideRange - Cover letter output: ${outputStr}`);
+            return outputStr || "";
+        } catch (error: any) {
+            this.logger.error(`Error in handleCoverLetterChain: ${error.message}`);
+            return "";
+        }
     }
+
 
     private async handleStandardChain(sectionName: string, question: string): Promise<string> {
         if (!this.cv) throw new Error("CV not set.");
 
         // Log the key names from the CV
         // console.debug("handleStandardChain - CV keys:", Object.keys(this.cv));
+        const jobDescription = this.getCurrentJob()?.description || "";
         const sectionNameKey = sectionName.trim().toLocaleLowerCase().replace(" ", "_") as keyof Resume;
         this.logger.debug(`handleStandardChain - Invoking chain for section '${sectionName}' with question: ${question}`);
         const chains = this.initializeChains();
@@ -183,7 +203,7 @@ export class aiAnswerer {
         const resumeSectionStr = this.formatResumeSection(sectionNameKey, resumeSection);
         const resumeSkillsStr = formatSkills(this.cv.skills);
         console.debug(`answerQuestionTextualWideRange - Invoking chain for section '${sectionName}' with question: ${question}, resume section: ${resumeSectionStr}, resume skills: ${resumeSkillsStr}`);
-        const output = await chain.invoke({ resume_section: resumeSectionStr, skills: resumeSkillsStr, question }) as AIMessage;
+        const output = await chain.invoke({ resume_section: resumeSectionStr, skills: resumeSkillsStr, question, job_description: jobDescription }) as AIMessage;
         const outputText = findContent(output);
 
         this.logger.debug(`answerQuestionTextualWideRange - Final output: ${outputText}`);
@@ -213,11 +233,15 @@ export class aiAnswerer {
         if (sectionName === "experience_details") {
             return formatExperienceDetails(resumeSection as ExperienceDetail[]);
         }
-        return String(resumeSection);
+        this.logger.debug(`formatResumeSection - Section content: ${JSON.stringify(resumeSection)}`);
+        return JSON.stringify(resumeSection);
     }
 
 
-    private preprocessTemplateString(template: string): string {
+    private preprocessTemplateString(template: string | ((question: string) => string)): string {
+        if (typeof template === 'function') {
+            return dedent(template(''));
+        }
         return dedent(template);
     }
 

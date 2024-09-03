@@ -14,13 +14,14 @@ class LinkedInEasyApplier {
     private formFiller: ApplicationFormFiller;
     private pdfGenerator: PDFGenerator;
     private aiAnswerer: aiAnswerer;
+    private questionManager: QuestionManager;
 
     constructor(driver: WebDriver, aiAnswerer: aiAnswerer) {
         this.driver = driver;
         this.aiAnswerer = aiAnswerer;
-        const questionManager = new QuestionManager(aiAnswerer);
+        this.questionManager = new QuestionManager(aiAnswerer);
         this.jobDetailExtractor = new JobDetailExtractor(driver);
-        this.formFiller = new ApplicationFormFiller(driver, questionManager);
+        this.formFiller = new ApplicationFormFiller(driver, this.questionManager);
         const resumePath = process.env.RESUME_PATH ? this.validateResumePath(process.env.RESUME_PATH) : null;
         this.pdfGenerator = new PDFGenerator(resumePath);
     }
@@ -103,8 +104,13 @@ class LinkedInEasyApplier {
      * @param job The job to set.
      */
     private async setJob(job: Job): Promise<void> {
-        job.setJobDescription(await this.jobDetailExtractor.extractJobDescription());
-        job.setRecruiterLink(await this.jobDetailExtractor.extractJobRecruiter());
+        const jobDescription = await this.jobDetailExtractor.extractJobDescription();
+        const recruiterLink = await this.jobDetailExtractor.extractJobRecruiter();
+        this.questionManager.setCurrentJob({
+            ...job,
+            description: jobDescription || '',
+            recruiter_link: recruiterLink,
+        } as Job);
     }
 
     /**

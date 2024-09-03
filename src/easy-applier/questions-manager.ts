@@ -1,17 +1,34 @@
 import fs from 'fs';
 import { aiAnswerer } from '../aiAnswerer';
 import { PersonalInformation, Resume } from '../cv.interface';
+import { Job } from '../job';
 
 class QuestionManager {
     private aiAnswerer: aiAnswerer;
     private outputFile: string = 'answers.json';
     private questions: Array<any> = [];
     private cvData: Resume | null = null;
+    private job?: Job;
 
     constructor(aiAnswerer: aiAnswerer) {
         this.aiAnswerer = aiAnswerer;
         this.questions = this.loadQuestionsFromJson();
         this.loadCVData();
+    }
+
+    /**
+     * Sets the current job for which questions are being answered.
+     */
+    setCurrentJob(job: Job): void {
+        this.job = job;
+        this.aiAnswerer.setCurrentJob(job);
+    }
+
+    /**
+     * Gets the current job for which questions are being answered.
+     */
+    getCurrentJob(): Job | undefined {
+        return this.job;
     }
 
     /**
@@ -88,12 +105,12 @@ class QuestionManager {
      * Answers a textual question that can have a wide range of possible answers.
      * 
      * @param questionText The question text to answer.
-     * @param options Optional. The options provided for the question.
+     * @param description description, can be job description or context
      * @returns A promise that resolves to the answer string.
      */
-    public async answerQuestionTextualWideRange(questionText: string, options?: string[]): Promise<string> {
+    public async answerQuestionTextualWideRange(questionText: string, description: string): Promise<string> {
         // Example implementation; replace with actual logic using aiAnswerer
-        return this.aiAnswerer.answerQuestionTextualWideRange(questionText, options || []);
+        return this.aiAnswerer.answerQuestionTextualWideRange(questionText, description);
     }
 
     /**

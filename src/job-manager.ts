@@ -72,7 +72,7 @@ class LinkedInJobManager {
     async startApplying() {
         const searches = shuffle(this.positions.flatMap(position => this.locations.map(location => ({ position, location }))));
         let pageSleep = 0;
-        const minimumTime = 60 * 15;
+        const minimumTime = 60 * 2;
         let minimumPageTime = Date.now() + minimumTime * 1000;
 
         this.logger.info("Starting the job application process...");
@@ -260,7 +260,7 @@ class LinkedInJobManager {
             } catch (error: any) {
                 this.logger.warn(`Attempt ${attempt} failed to navigate to job page ${jobPage}: ${error.message}`);
                 if (attempt === maxRetries) {
-                    throw new Error(`Failed to navigate to job page ${jobPage} after ${maxRetries} attempts.`);
+                    this.logger.warn(`Failed to navigate to job page ${jobPage} after ${maxRetries} attempts.`);
                 }
                 // Exponential backoff
                 await utils.sleep(delay);

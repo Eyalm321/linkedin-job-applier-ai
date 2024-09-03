@@ -1,6 +1,7 @@
 import { WebDriver, By, until } from 'selenium-webdriver';
 import { scrollSlow, sleepRandom } from '../utils';
 import { LoggingService } from '../logging.service';
+import { NoSuchElementError } from 'selenium-webdriver/lib/error';
 
 class JobDetailExtractor {
     private driver: WebDriver;
@@ -15,7 +16,7 @@ class JobDetailExtractor {
      * 
      * @returns A promise that resolves to the job description as a string.
      */
-    public async extractJobDescription(): Promise<string> {
+    public async extractJobDescription(): Promise<string | undefined> {
         try {
             await sleepRandom(2000, 3000);
             const seeMoreButton = await this.driver.findElement(
@@ -29,8 +30,9 @@ class JobDetailExtractor {
 
             return await descriptionElement.getAttribute('innerHTML');
         } catch (e) {
-            console.error("Job description 'See more' button not found or unable to click:", e);
-            throw e;
+            if (!(e instanceof NoSuchElementError)) {
+                this.logger.error(`Error extracting job description: ${e}`);
+            }
         }
     }
 

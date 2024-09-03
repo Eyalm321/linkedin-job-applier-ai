@@ -2,14 +2,13 @@ import { WebDriver, WebElement, By } from 'selenium-webdriver';
 import { ElementUtilities } from './element-utilities';
 import { QuestionManager } from './questions-manager';
 import { Job } from '../job';
-import { random, sleep, sleepRandom } from '../utils';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import PDFDocument from 'pdfkit';
 import { LoggingService } from '../logging.service';
 import { NoSuchElementError } from 'selenium-webdriver/lib/error';
-import { toSnakeCase } from '../utils';
+import { toSnakeCase, sleepRandom, sleep, random } from '../utils';
 
 class ApplicationFormFiller {
     private driver: WebDriver;
@@ -525,8 +524,8 @@ class ApplicationFormFiller {
                 return true;
             }
 
-            this.logger.debug(`Answer not found for question: ${questionText}`);
-            const answer = await this.questionManager.answerQuestionTextualWideRange(questionText, options);
+            this.logger.debug(`Answer not found for question: ${questionText} from options: ${options}`);
+            const answer = await this.questionManager.answerQuestionFromOptions(questionText, options);
 
             // Save the question-answer pair
             this.questionManager.saveQuestionsToJson({ type: 'radio', question: questionText, answer });
@@ -565,21 +564,83 @@ class ApplicationFormFiller {
 
 
     private async selectRadio(radios: WebElement[], answer: string): Promise<void> {
-        this.logger.debug(`Answer to match: [${answer}]`);
-        for (const radio of radios) {
-            const optionText = await this.getQuestionText(radio);
+        const maxRetries = 3; // Maximum number of retries
 
-            if (optionText === answer.toLowerCase()) {
-                const inputElement = await radio.findElement(By.css('input'));
-                await inputElement.click();
-                this.logger.debug(`Selected radio option: ${optionText}`);
-                return;
-            } else {
-                this.logger.warn(`Radio option not matching: ${optionText}`);
+        for (const radio of radios) {
+            try {
+                // Find the parent div of the radio button
+                const parentDiv = await radio.findElement(By.xpath('..'));
+                // Locate the label within the parent div
+                const label = await parentDiv.findElement(By.css('label'));
+                const labelText = await label.getText();
+
+                if (labelText.trim().toLowerCase() === answer.toLowerCase()) {
+                    for (let attempt = 0; attempt < maxRetries; attempt++) {
+                        try {
+                            // Ensure the element is in view
+                            await this.driver.executeScript("arguments[0].scrollIntoView(true);", label);
+
+                            await this.retryClickWithOverlayHandling(label);  // Handle click with overlay check
+                        } catch (error) {
+                            this.logger.warn(`Standard click failed, attempting JavaScript click for: ${labelText}`);
+                            await this.driver.executeScript('arguments[0].click();', label);  // Use JavaScript click as a fallback
+                        }
+
+                        // Verify if the radio button is selected
+                        const isSelected = await radio.isSelected();
+                        if (isSelected) {
+                            this.logger.info(`Successfully selected radio option: ${answer}`);
+                            return;
+                        } else {
+                            this.logger.warn(`Radio option ${answer} was not selected. Retry attempt ${attempt + 1}`);
+                        }
+
+                        await sleepRandom(1000, 2000);
+                    }
+
+                    this.logger.error(`Failed to select radio option ${answer} after ${maxRetries} attempts.`);
+                    return;
+                } else {
+                    this.logger.debug(`Label text "${labelText.trim()}" does not match "${answer}".`);
+                }
+            } catch (error) {
+                this.logger.error(`Error selecting radio option: ${answer}. Error: ${error}`);
             }
         }
-        this.logger.warn(`No matching radio option found for answer: ${answer}`);
+        this.logger.warn(`Radio option with answer '${answer}' not found.`);
     }
+
+
+
+
+    private async retryClickWithOverlayHandling(label: WebElement): Promise<void> {
+        try {
+            await label.click();  // First attempt to click
+        } catch (error) {
+            this.logger.warn('Click failed, checking for overlays');
+            await this.dismissOverlayIfPresent();
+            try {
+                await label.click();  // Retry click after overlay is dismissed
+            } catch (retryError) {
+                this.logger.error(`Retry click failed: ${retryError}`);
+                throw retryError;  // If it still fails, throw the error to be handled upstream
+            }
+        }
+    }
+
+    private async dismissOverlayIfPresent(): Promise<void> {
+        try {
+            const overlay = await this.driver.findElement(By.css('.overlay-selector')); // Adjust selector for overlay
+            if (overlay) {
+                await overlay.click();
+                this.logger.info('Dismissed overlay obstructing the click');
+                await sleepRandom(600, 900);
+            }
+        } catch (error) {
+            this.logger.debug('No overlay found or failed to dismiss it.');
+        }
+    }
+
 
     private async findTextboxQuestions(section: WebElement): Promise<WebElement[]> {
         try {
@@ -600,6 +661,7 @@ class ApplicationFormFiller {
     }): Promise<boolean> {
         const { section, textField, overrideAnswer } = data;
         try {
+            const jobDescription = this.questionManager.getCurrentJob()?.description;
             const questionText = await this.getQuestionText(section);
             const isNumeric = await this.elementUtils.isNumericField(textField);
             const questionType = isNumeric ? 'numeric' : 'textbox';
@@ -608,7 +670,7 @@ class ApplicationFormFiller {
             const existingAnswer = overrideAnswer || this.questionManager.findQuestionAnswer(sanitizedQuestion, questionType)?.['answer'];
             const answer = existingAnswer || (isNumeric
                 ? await this.questionManager.answerQuestionNumeric(questionText)
-                : await this.questionManager.answerQuestionTextualWideRange(questionText));
+                : await this.questionManager.answerQuestionTextualWideRange(questionText, jobDescription || ''));
 
             if (!existingAnswer) {
                 this.questionManager.saveQuestionsToJson({ type: questionType, question: questionText, answer: String(answer) });
@@ -970,7 +1032,8 @@ class ApplicationFormFiller {
     }
 
     private async createAndUploadCoverLetter(uploadElement: WebElement): Promise<void> {
-        const coverLetter = await this.questionManager.answerQuestionTextualWideRange("Write a cover letter");
+        const jobDescription = this.questionManager.getCurrentJob()?.description;
+        const coverLetter = await this.questionManager.answerQuestionTextualWideRange("Write a cover letter", jobDescription || '');
         const tempFilePath = path.join(os.tmpdir(), `cover_letter_${random(0, 9999)}.pdf`);
         await this.generatePDF(coverLetter, tempFilePath);
         await uploadElement.sendKeys(tempFilePath);

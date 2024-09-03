@@ -38,7 +38,10 @@ class Job {
         this.summarize_job_description = summarize_job_description;
     }
 
-    setJobDescription(description: string): void {
+    setJobDescription(description?: string): void {
+        if (!description) {
+            return;
+        }
         this.description = description;
     }
 

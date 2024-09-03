@@ -104,7 +104,8 @@ Your job is to answer the question based on the provided experience details.
 - If the question is a numerical question, answer with a number.
 - If the question is a yes/no question, answer with Yes or No.
 - If the question is an open-ended question, answer with a relevant response.
-- If unsure, side with the candidate having the experience.
+- If the question is "Headline", answer with the job title of the candidate.
+- If unsure, side with the candidate having the experience within a reasonable doubt.
 - Keep the answer under 140 characters.
 
 ## Example
@@ -125,6 +126,7 @@ Answer: 4
 
 Notice that "Do you have experience with" is an opened question, while "How many years of work experience do you have with" is a numerical question.
 
+Job Description: {job_description}
 Experience Details: {resume_section}
 Skills: {skills}
 
@@ -176,11 +178,6 @@ Answer the following question based on the provided salary expectations.
 - Answer questions directly.
 - Keep the answer under 140 characters.
 - Use periods only if the answer has multiple sentences.
-
-## Example
-My resume: Looking for a salary in the range of 50k-60k USD.
-Question: What are your salary expectations?
-55000.
 
 Salary Expectations: {resume_section}
 Question: {question}
@@ -269,25 +266,38 @@ This comprehensive overview will serve as a guideline for the recruitment proces
 `;
 
    public coverLetterTemplate = `
-Compose a brief and impactful cover letter based on the provided job description and resume. The letter should be no longer than three paragraphs and should be written in a professional, yet conversational tone. Avoid using any placeholders, and ensure that the letter flows naturally and is tailored to the job.
+Compose a brief and impactful cover letter based on the provided job description and resume.
+The letter should be no longer than three paragraphs and should be written in a professional, yet conversational tone.
+Avoid using any placeholders, and ensure that the letter flows naturally and is tailored to the job.
 
-Analyze the job description to identify key qualifications and requirements. Introduce the candidate succinctly, aligning their career objectives with the role. Highlight relevant skills and experiences from the resume that directly match the job’s demands, using specific examples to illustrate these qualifications. Reference notable aspects of the company, such as its mission or values, that resonate with the candidate’s professional goals. Conclude with a strong statement of why the candidate is a good fit for the position, expressing a desire to discuss further.
+Analyze the job description to identify key qualifications and requirements.
+Introduce the candidate succinctly, aligning their career objectives with the role.
+Highlight relevant skills and experiences from the resume that directly match the job’s demands,
+using specific Keywords to illustrate these qualifications. Reference notable aspects of the company,
+such as its mission or values, that resonate with the candidate’s professional goals.
+Conclude with a strong statement of why the candidate is a good fit for the position, expressing a desire to discuss further.
 
-Please write the cover letter in a way that directly addresses the job role and the company’s characteristics, ensuring it remains concise and engaging without unnecessary embellishments. The letter should be formatted into paragraphs and should not include a greeting or signature.
+Please write the cover letter in a way that directly addresses the job role and the company’s characteristics,
+ensuring it remains concise and engaging without unnecessary embellishments.
+The letter should be formatted into paragraphs and should not include a greeting or signature.
 
 ## Rules:
 - Provide only the text of the cover letter.
 - Do not include any introductions, explanations, or additional information.
 - The letter should be formatted into paragraph.
+- If the question is "Headline", answer with a headline like "Why I am the best candidate for the Software Engineer position",
+you can come up with your own headlines based on context.
+- If the question is "Summary", answer with a summary of the cover letter.
+- If the question is neither "Headline" nor "Summary", in regards to the job description, answer with a relevant response, tailored to the job description.
+
+## Question:
+{question}
 
 ## Job Description:
-\`\`\`
 {job_description}
-\`\`\`
+
 ## My resume:
-\`\`\`
 {resume}
-\`\`\`
 `;
 
    public numericQuestionTemplate = `
@@ -375,7 +385,7 @@ When responding, consider all available information, including projects, work ex
 The following is a resume and an answered question about the resume, the answer is one of the options.
 
 ## Rules
-- Never choose the default/placeholder option, examples are: 'Select an option', 'None', 'Choose from the options below', etc.
+- Never choose the default/placeholder option, Keywords are: 'Select an option', 'None', 'Choose from the options below', etc.
 - The answer must be one of the options.
 - The answer must exclusively contain one of the options.
 
@@ -469,67 +479,67 @@ Text without placeholders: "I'm a software engineer with 10 years of experience.
    1. **Personal Information**:
       - **Purpose**: Contains your basic contact details and online profiles.
       - **Use When**: The question is about how to contact you or requests links to your professional online presence.
-      - **Examples**: Email address, phone number, LinkedIn profile, GitHub repository, personal website.
+      - **Keywords**: Email address, phone number, LinkedIn profile, GitHub repository, personal website, Address, Street address line 1, City, State, ZIP / Postal Code, Country, Date of Birth, State, Location.
 
    2. **Self Identification**:
       - **Purpose**: Covers personal identifiers and demographic information.
       - **Use When**: The question pertains to your gender, pronouns, veteran status, disability status, or ethnicity.
-      - **Examples**: Gender, pronouns, veteran status, disability status, ethnicity.
+      - **Keywords**: Gender, pronouns, veteran status, disability status, ethnicity.
 
    3. **Legal Authorization**:
       - **Purpose**: Details your work authorization status and visa requirements.
       - **Use When**: The question asks about your ability to work in specific countries or if you need sponsorship or visas.
-      - **Examples**: Work authorization in EU and US, visa requirements, legally allowed to work.
+      - **Keywords**: Work authorization in EU and US, visa requirements, legally allowed to work.
 
    4. **Work Preferences**:
       - **Purpose**: Specifies your preferences regarding work conditions and job roles.
       - **Use When**: The question is about your preferences for remote work, in-person work, relocation, and willingness to undergo assessments or background checks.
-      - **Examples**: Remote work, in-person work, open to relocation, willingness to complete assessments.
+      - **Keywords**: Remote work, in-person work, open to relocation, willingness to complete assessments.
 
    5. **Education Details**:
       - **Purpose**: Contains information about your academic qualifications.
       - **Use When**: The question concerns your degrees, universities attended, GPA, and relevant coursework.
-      - **Examples**: Degree, university, GPA, field of study, exams.
+      - **Keywords**: Degree, university, GPA, field of study, exams.
 
    6. **Experience Details**:
       - **Purpose**: Details your professional work history and key responsibilities.
       - **Use When**: The question pertains to your job roles, responsibilities, and achievements in previous positions.
-      - **Examples**: Job positions, company names, key responsibilities, skills acquired.
+      - **Keywords**: Job positions, company names, key responsibilities, skills acquired.
 
    7. **Projects**:
       - **Purpose**: Highlights specific projects you have worked on.
       - **Use When**: The question asks about particular projects, their descriptions, or links to project repositories.
-      - **Examples**: Project names, descriptions, links to project repositories.
+      - **Keywords**: Project names, descriptions, links to project repositories.
 
    8. **Availability**:
       - **Purpose**: Provides information on your availability for new roles.
       - **Use When**: The question is about how soon you can start a new job or your notice period.
-      - **Examples**: Notice period, availability to start.
+      - **Keywords**: Notice period, availability to start.
 
    9. **Salary Expectations**:
       - **Purpose**: Covers your expected salary range.
       - **Use When**: The question pertains to your salary expectations or compensation requirements.
-      - **Examples**: Desired salary range.
+      - **Keywords**: Desired salary range.
 
    10. **Certifications**:
       - **Purpose**: Lists your professional certifications or licenses.
       - **Use When**: The question involves your certifications or qualifications from recognized organizations.
-      - **Examples**: Certification names, issuing bodies, dates of validity.
+      - **Keywords**: Certification names, issuing bodies, dates of validity.
 
    11. **Languages**:
       - **Purpose**: Describes the languages you can speak and your proficiency levels.
       - **Use When**: The question asks about your language skills or proficiency in specific languages.
-      - **Examples**: Languages spoken, proficiency levels.
+      - **Keywords**: Languages spoken, proficiency levels.
 
    12. **Interests**:
       - **Purpose**: Details your personal or professional interests.
       - **Use When**: The question is about your hobbies, interests, or activities outside of work.
-      - **Examples**: Personal hobbies, professional interests.
+      - **Keywords**: Personal hobbies, professional interests.
 
    13. **Cover Letter**:
       - **Purpose**: Contains your personalized cover letter or statement.
       - **Use When**: The question involves your cover letter or specific written content intended for the job application.
-      - **Examples**: Cover letter content, personalized statements.
+      - **Keywords**: Headline, Summary, Cover letter content, personalized statements, Introduction, Body, Conclusion.
 
       Provide only the exact name of the section from the list above with no additional text.
 
